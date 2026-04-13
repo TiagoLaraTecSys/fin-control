@@ -1,0 +1,149 @@
+<h1 class="page-title">{{ 'BUDGET.TITLE' | translate }}</h1>
+
+<!-- ── Fluxo de Caixa ──────────────────────────────────── -->
+<mat-card class="section-card">
+  <div class="section-header">
+    <div class="section-header-icon cashflow-icon">
+      <mat-icon>timeline</mat-icon>
+    </div>
+    <div>
+      <div class="section-title">{{ 'BUDGET.CASHFLOW_TITLE' | translate }}</div>
+      <div class="section-sub">{{ 'BUDGET.CASHFLOW_SUBTITLE' | translate }}</div>
+    </div>
+  </div>
+
+  <!-- Month pills -->
+  <div class="month-pills">
+    @for (m of months; track m.value) {
+      <button
+        class="month-pill"
+        [class.active]="selectedMonth() === m.value"
+        (click)="selectedMonth.set(m.value)"
+      >{{ m.label.slice(0, 3) }}</button>
+    }
+  </div>
+
+  <mat-card-content>
+    @if (cashFlowEvents().length === 0) {
+      <div class="empty-state">
+        <mat-icon>event_note</mat-icon>
+        <p>{{ 'BUDGET.CASHFLOW_EMPTY' | translate }}</p>
+      </div>
+    } @else {
+      <div class="timeline">
+        @for (event of cashFlowEvents(); track $index; let i = $index) {
+          <div class="timeline-row" [class.is-income]="event.type === 'income'" [style.animation-delay]="(i * 40) + 'ms'">
+            <div class="tl-day">
+              <span class="day-num">{{ event.day }}</span>
+            </div>
+            <div class="tl-connector">
+              <div class="tl-dot" [class.income-dot]="event.type === 'income'" [class.expense-dot]="event.type === 'expense'"></div>
+              <div class="tl-line"></div>
+            </div>
+            <div class="tl-card" [class.income-card]="event.type === 'income'" [class.expense-card]="event.type === 'expense'">
+              <div class="tl-icon">
+                <mat-icon>{{ event.type === 'income' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+              </div>
+              <div class="tl-body">
+                <span class="tl-label">{{ event.label }}</span>
+                <span class="tl-type">{{ event.type === 'income' ? 'Entrada' : 'Saída' }}</span>
+              </div>
+              <div class="tl-right">
+                <span class="tl-amount" [class.income-amount]="event.type === 'income'" [class.expense-amount]="event.type === 'expense'">
+                  {{ event.type === 'income' ? '+' : '-' }}{{ event.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                </span>
+                <span class="tl-balance" [class.positive]="event.runningBalance >= 0" [class.negative]="event.runningBalance < 0">
+                  Saldo: {{ event.runningBalance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
+
+<!-- ── Agenda Mensal ───────────────────────────────────── -->
+@if (fixedExpenses().length > 0) {
+  <mat-card class="section-card">
+    <div class="section-header">
+      <div class="section-header-icon schedule-icon">
+        <mat-icon>calendar_month</mat-icon>
+      </div>
+      <div>
+        <div class="section-title">{{ 'BUDGET.SCHEDULE_TITLE' | translate }}</div>
+        <div class="section-sub">{{ 'BUDGET.SCHEDULE_SUBTITLE' | translate }}</div>
+      </div>
+    </div>
+
+    <mat-card-content>
+      <div class="schedule-grid">
+        <div class="sg-header">
+          <div class="sg-expense-col">{{ 'BUDGET.EXPENSE_COL' | translate }}</div>
+          @for (m of monthShortKeys; track m) {
+            <div class="sg-month-col">{{ m }}</div>
+          }
+        </div>
+        @for (expense of fixedExpenses(); track expense.id) {
+          <div class="sg-row">
+            <div class="sg-expense-col">
+              <span class="sg-label">{{ expense.label }}</span>
+              <span class="sg-amount">{{ expense.amount | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
+            </div>
+            @for (m of monthShortKeys; track m; let i = $index) {
+              <div class="sg-month-col">
+                <button
+                  class="month-toggle"
+                  [class.active]="isActive(expense.id, i)"
+                  (click)="toggle(expense.id, i)"
+                  [title]="m"
+                >
+                  <mat-icon>{{ isActive(expense.id, i) ? 'check' : 'remove' }}</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ── Projeção Anual ──────────────────────────────────── -->
+  <mat-card class="section-card">
+    <div class="section-header">
+      <div class="section-header-icon annual-icon">
+        <mat-icon>show_chart</mat-icon>
+      </div>
+      <div>
+        <div class="section-title">{{ 'BUDGET.ANNUAL_TITLE' | translate }}</div>
+        <div class="section-sub">Visão mês a mês do ano</div>
+      </div>
+    </div>
+
+    <mat-card-content>
+      <div class="annual-grid">
+        @for (summary of annualProjection(); track summary.month; let i = $index) {
+          <div class="annual-month" [class.negative]="summary.balance < 0" [style.animation-delay]="(i * 40) + 'ms'">
+            <div class="am-name">{{ monthShortKeys[summary.month] }}</div>
+            <div class="am-usage-bar">
+              <div class="am-usage-fill"
+                [style.width.%]="summary.usagePercent > 100 ? 100 : summary.usagePercent"
+                [class.ok]="summary.usagePercent <= 70"
+                [class.caution]="summary.usagePercent > 70 && summary.usagePercent <= 90"
+                [class.danger]="summary.usagePercent > 90">
+              </div>
+            </div>
+            <div class="am-expenses">{{ summary.totalExpenses | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</div>
+            <div class="am-balance" [class.positive]="summary.balance >= 0">
+              {{ summary.balance | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}
+            </div>
+            <div class="am-pct" [class.ok]="summary.usagePercent <= 70" [class.caution]="summary.usagePercent > 70 && summary.usagePercent <= 90" [class.danger]="summary.usagePercent > 90">
+              {{ summary.usagePercent | number:'1.0-0':'pt-BR' }}%
+            </div>
+          </div>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+}

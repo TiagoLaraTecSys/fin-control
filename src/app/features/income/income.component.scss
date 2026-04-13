@@ -1,0 +1,217 @@
+.income-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+/* ── Form card ──────────────────────────────────────────────── */
+.form-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 20px 0;
+
+  .form-card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981, #34d399);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    mat-icon { color: white; font-size: 20px; }
+  }
+
+  .form-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .form-card-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+}
+
+.income-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  mat-form-field { width: 100%; }
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+
+  .submit-btn {
+    flex: 1;
+    height: 44px;
+    font-size: 14px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3) !important;
+  }
+}
+
+/* ── List card ──────────────────────────────────────────────── */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 0;
+
+  .list-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .list-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+}
+
+.total-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 8px 14px;
+
+  .total-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #065f46;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .total-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: #047857;
+    letter-spacing: -0.3px;
+  }
+}
+
+/* ── Income rows ────────────────────────────────────────────── */
+.income-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.income-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fafafa;
+  border: 1px solid var(--border);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeSlideUp 0.35s ease both;
+
+  &:hover {
+    background: #f0fdf4;
+    border-color: #a7f3d0;
+    transform: translateX(4px);
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.1);
+  }
+}
+
+.item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.income-icon {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  mat-icon { color: #065f46; }
+}
+
+.item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.item-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4338ca;
+  background: #ede9fe;
+  border-radius: 6px;
+  padding: 2px 7px;
+  width: fit-content;
+
+  mat-icon { font-size: 12px; width: 12px; height: 12px; }
+}
+
+.item-amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: #047857;
+  white-space: nowrap;
+  letter-spacing: -0.2px;
+}
+
+.item-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 200ms;
+
+  .income-item:hover & { opacity: 1; }
+}
+
+.action-btn {
+  width: 32px !important;
+  height: 32px !important;
+  mat-icon { font-size: 18px; }
+}
+.edit-btn mat-icon   { color: #6366f1; }
+.delete-btn mat-icon { color: #ef4444; }
+
+/* ── Empty state ────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 0;
+  mat-icon { font-size: 48px; width: 48px; height: 48px; color: #d1d5db; }
+  p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+}

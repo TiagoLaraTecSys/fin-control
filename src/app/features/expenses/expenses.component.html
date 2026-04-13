@@ -1,0 +1,186 @@
+<h1 class="page-title">{{ 'EXPENSES.TITLE' | translate }}</h1>
+
+<div class="expenses-layout">
+
+  <!-- Form Card -->
+  <mat-card class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon">
+        <mat-icon>{{ editingId() ? 'edit' : 'add' }}</mat-icon>
+      </div>
+      <div>
+        <div class="form-card-title">{{ (editingId() ? 'EXPENSES.EDIT' : 'EXPENSES.ADD') | translate }}</div>
+        <div class="form-card-sub">Informe os dados da despesa</div>
+      </div>
+    </div>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="expense-form">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'EXPENSES.LABEL' | translate }}</mat-label>
+          <mat-icon matPrefix>label_outline</mat-icon>
+          <input matInput formControlName="label" placeholder="Ex: Aluguel, Netflix..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'EXPENSES.AMOUNT' | translate }}</mat-label>
+          <mat-icon matPrefix>attach_money</mat-icon>
+          <span matTextPrefix>R$&nbsp;</span>
+          <input matInput type="number" formControlName="amount" min="0" placeholder="0,00" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'EXPENSES.CATEGORY' | translate }}</mat-label>
+          <mat-icon matPrefix>category</mat-icon>
+          <mat-select formControlName="category">
+            @for (cat of categories; track cat) {
+              <mat-option [value]="cat">
+                {{ 'EXPENSES.CATEGORIES.' + cat | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="fixed-toggle">
+          <mat-checkbox formControlName="isFixed" color="primary">
+            {{ 'EXPENSES.FIXED' | translate }}
+          </mat-checkbox>
+        </div>
+
+        @if (isFixedValue) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'EXPENSES.DUE_DAY' | translate }}</mat-label>
+            <mat-icon matPrefix>event</mat-icon>
+            <input matInput type="number" formControlName="dueDay" min="1" max="31" placeholder="1–31" />
+            <mat-hint>Dia do mês do vencimento</mat-hint>
+          </mat-form-field>
+        }
+
+        <div class="form-actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid" class="submit-btn">
+            <mat-icon>{{ editingId() ? 'save' : 'add_circle' }}</mat-icon>
+            {{ (editingId() ? 'EXPENSES.SAVE' : 'EXPENSES.ADD_BTN') | translate }}
+          </button>
+          @if (editingId()) {
+            <button mat-stroked-button type="button" (click)="cancelEdit()">
+              {{ 'EXPENSES.CANCEL' | translate }}
+            </button>
+          }
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Lists -->
+  <div class="lists-col">
+
+    <!-- Fixed -->
+    <mat-card class="list-card">
+      <div class="list-header">
+        <div>
+          <div class="list-title">{{ 'EXPENSES.TAB_FIXED' | translate }}</div>
+          <div class="list-sub">{{ fixedExpenses().length }} despesa(s) recorrente(s)</div>
+        </div>
+        <div class="total-badge expenses-badge">
+          <span class="total-label">Total/mês</span>
+          <span class="total-value">
+            {{ fixedExpenses() | expensesTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+          </span>
+        </div>
+      </div>
+      <mat-card-content>
+        @if (fixedExpenses().length === 0) {
+          <div class="empty-state">
+            <mat-icon>receipt_long</mat-icon>
+            <p>{{ 'EXPENSES.EMPTY' | translate }}</p>
+          </div>
+        } @else {
+          <div class="expense-list">
+            @for (row of fixedExpenses(); track row.id; let i = $index) {
+              <div class="expense-item" [style.animation-delay]="(i * 50) + 'ms'">
+                <div class="item-icon" [style.background]="categoryGradient(row.category)">
+                  <mat-icon>{{ categoryIcon(row.category) }}</mat-icon>
+                </div>
+                <div class="item-body">
+                  <span class="item-label">{{ row.label }}</span>
+                  <div class="item-meta">
+                    <span class="category-pill" [style.background]="categoryBg(row.category)" [style.color]="categoryColor(row.category)">
+                      {{ categoryLabel(row.category) }}
+                    </span>
+                    <span class="day-badge">
+                      <mat-icon>event</mat-icon>
+                      Dia {{ row.dueDay ?? 1 }}
+                    </span>
+                  </div>
+                </div>
+                <div class="item-amount expense-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+                <div class="item-actions">
+                  <button mat-icon-button class="action-btn edit-btn" (click)="edit(row)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="action-btn delete-btn" (click)="remove(row.id)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Variable -->
+    <mat-card class="list-card">
+      <div class="list-header">
+        <div>
+          <div class="list-title">{{ 'EXPENSES.TAB_VARIABLE' | translate }}</div>
+          <div class="list-sub">{{ variableExpenses().length }} despesa(s) variável(is)</div>
+        </div>
+        @if (variableExpenses().length > 0) {
+          <div class="total-badge expenses-badge">
+            <span class="total-label">Total</span>
+            <span class="total-value">
+              {{ variableExpenses() | expensesTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+            </span>
+          </div>
+        }
+      </div>
+      <mat-card-content>
+        @if (variableExpenses().length === 0) {
+          <div class="empty-state">
+            <mat-icon>receipt</mat-icon>
+            <p>{{ 'EXPENSES.EMPTY' | translate }}</p>
+          </div>
+        } @else {
+          <div class="expense-list">
+            @for (row of variableExpenses(); track row.id; let i = $index) {
+              <div class="expense-item" [style.animation-delay]="(i * 50) + 'ms'">
+                <div class="item-icon" [style.background]="categoryGradient(row.category)">
+                  <mat-icon>{{ categoryIcon(row.category) }}</mat-icon>
+                </div>
+                <div class="item-body">
+                  <span class="item-label">{{ row.label }}</span>
+                  <div class="item-meta">
+                    <span class="category-pill" [style.background]="categoryBg(row.category)" [style.color]="categoryColor(row.category)">
+                      {{ categoryLabel(row.category) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="item-amount expense-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+                <div class="item-actions">
+                  <button mat-icon-button class="action-btn edit-btn" (click)="edit(row)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="action-btn delete-btn" (click)="remove(row.id)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>

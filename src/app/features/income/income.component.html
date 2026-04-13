@@ -1,0 +1,103 @@
+<h1 class="page-title">{{ 'INCOME.TITLE' | translate }}</h1>
+
+<div class="income-layout">
+
+  <!-- Form Card -->
+  <mat-card class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-icon">
+        <mat-icon>{{ editingId() ? 'edit' : 'add' }}</mat-icon>
+      </div>
+      <div>
+        <div class="form-card-title">{{ (editingId() ? 'INCOME.EDIT' : 'INCOME.ADD') | translate }}</div>
+        <div class="form-card-sub">Informe os dados da receita</div>
+      </div>
+    </div>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="income-form">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'INCOME.LABEL' | translate }}</mat-label>
+          <mat-icon matPrefix>label_outline</mat-icon>
+          <input matInput formControlName="label" placeholder="Ex: Salário, Freelance..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'INCOME.AMOUNT' | translate }}</mat-label>
+          <mat-icon matPrefix>attach_money</mat-icon>
+          <span matTextPrefix>R$&nbsp;</span>
+          <input matInput type="number" formControlName="amount" min="0" placeholder="0,00" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'INCOME.RECEIPT_DAY' | translate }}</mat-label>
+          <mat-icon matPrefix>event</mat-icon>
+          <input matInput type="number" formControlName="receiptDay" min="1" max="31" placeholder="1–31" />
+          <mat-hint>Dia do mês em que recebe</mat-hint>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid" class="submit-btn">
+            <mat-icon>{{ editingId() ? 'save' : 'add_circle' }}</mat-icon>
+            {{ (editingId() ? 'INCOME.SAVE' : 'INCOME.ADD_BTN') | translate }}
+          </button>
+          @if (editingId()) {
+            <button mat-stroked-button type="button" (click)="cancelEdit()">
+              {{ 'INCOME.CANCEL' | translate }}
+            </button>
+          }
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- List Card -->
+  <mat-card class="list-card">
+    <div class="list-header">
+      <div>
+        <div class="list-title">{{ 'INCOME.LIST_TITLE' | translate }}</div>
+        <div class="list-sub">{{ incomes().length }} fonte(s) cadastrada(s)</div>
+      </div>
+      <div class="total-badge">
+        <span class="total-label">Total</span>
+        <span class="total-value">{{ totalIncome() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+      </div>
+    </div>
+
+    <mat-card-content>
+      @if (incomes().length === 0) {
+        <div class="empty-state">
+          <mat-icon>savings</mat-icon>
+          <p>{{ 'INCOME.EMPTY' | translate }}</p>
+        </div>
+      } @else {
+        <div class="income-list">
+          @for (row of incomes(); track row.id; let i = $index) {
+            <div class="income-item" [style.animation-delay]="(i * 50) + 'ms'">
+              <div class="item-icon income-icon">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <div class="item-body">
+                <span class="item-label">{{ row.label }}</span>
+                <span class="day-badge">
+                  <mat-icon>event</mat-icon>
+                  Dia {{ row.receiptDay ?? 1 }}
+                </span>
+              </div>
+              <div class="item-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+              <div class="item-actions">
+                <button mat-icon-button class="action-btn edit-btn" (click)="edit(row)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button class="action-btn delete-btn" (click)="remove(row.id)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+</div>

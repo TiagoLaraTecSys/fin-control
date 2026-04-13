@@ -1,0 +1,153 @@
+<h1 class="page-title">{{ 'DASHBOARD.TITLE' | translate }} — {{ today | date:'MMMM':'':'pt-BR' }} {{ currentYear }}</h1>
+
+<!-- Health Status -->
+<div class="health-banner" [class]="healthStatus().cssClass">
+  <mat-icon>{{ healthStatus().icon }}</mat-icon>
+  <div>
+    <div class="health-label">
+      {{ 'DASHBOARD.HEALTH_LABEL' | translate }}: <strong>{{ healthStatus().labelKey | translate }}</strong>
+    </div>
+    <div class="health-sub">
+      {{ 'DASHBOARD.HEALTH_SUB' | translate:{ value: (summary().usagePercent | number:'1.0-1') } }}
+    </div>
+  </div>
+</div>
+
+<!-- Fortnights Section -->
+@if (hasData()) {
+  <div class="fortnights-grid">
+    @for (fn of fortnights(); track fn.label) {
+      <mat-card class="fortnight-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>date_range</mat-icon>
+          <mat-card-title>{{ fn.label }}</mat-card-title>
+          <mat-card-subtitle>{{ 'DASHBOARD.DAYS_RANGE' | translate:{ start: fn.startDay, end: fn.endDay } }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="fn-row">
+            <div class="fn-metric">
+              <span class="fn-metric-label">{{ 'DASHBOARD.PERIOD_INCOME' | translate }}</span>
+              <span class="fn-metric-value income-value">{{ fn.totalIncome | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+            </div>
+            <div class="fn-metric">
+              <span class="fn-metric-label">{{ 'DASHBOARD.PERIOD_EXPENSES' | translate }}</span>
+              <span class="fn-metric-value expense-value">{{ fn.totalExpenses | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+            </div>
+            <div class="fn-metric">
+              <span class="fn-metric-label">{{ 'DASHBOARD.PERIOD_BALANCE' | translate }}</span>
+              <span class="fn-metric-value" [class.positive-balance]="fn.balance >= 0" [class.negative-balance]="fn.balance < 0">
+                {{ fn.balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              </span>
+            </div>
+          </div>
+
+          @if (fn.expenses.length > 0) {
+            <div class="fn-expenses-list">
+              @for (exp of fn.expenses; track exp.id) {
+                <div class="fn-expense-item">
+                  <span class="fn-due-badge">dia {{ exp.dueDay ?? 1 }}</span>
+                  <span class="fn-expense-label">{{ exp.label }}</span>
+                  <span class="fn-expense-amount">{{ exp.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+}
+
+<!-- Summary Cards -->
+<div class="card-grid summary-grid">
+  <mat-card class="summary-card income">
+    <mat-card-content>
+      <div class="card-icon"><mat-icon>payments</mat-icon></div>
+      <div class="card-info">
+        <div class="card-label">{{ 'DASHBOARD.TOTAL_INCOME' | translate }}</div>
+        <div class="card-value">{{ summary().totalIncome | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="summary-card expenses">
+    <mat-card-content>
+      <div class="card-icon"><mat-icon>receipt_long</mat-icon></div>
+      <div class="card-info">
+        <div class="card-label">{{ 'DASHBOARD.TOTAL_EXPENSES' | translate }}</div>
+        <div class="card-value">{{ summary().totalExpenses | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="summary-card balance" [class.negative]="summary().balance < 0">
+    <mat-card-content>
+      <div class="card-icon"><mat-icon>account_balance</mat-icon></div>
+      <div class="card-info">
+        <div class="card-label">{{ 'DASHBOARD.BALANCE' | translate }}</div>
+        <div class="card-value">{{ summary().balance | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="summary-card usage">
+    <mat-card-content>
+      <div class="card-icon"><mat-icon>pie_chart</mat-icon></div>
+      <div class="card-info">
+        <div class="card-label">{{ 'DASHBOARD.USAGE' | translate }}</div>
+        <div class="card-value">{{ summary().usagePercent | number:'1.0-1':'pt-BR' }}%</div>
+      </div>
+      <mat-progress-bar
+        [value]="summary().usagePercent"
+        [color]="summary().usagePercent > 90 ? 'warn' : summary().usagePercent > 70 ? 'accent' : 'primary'"
+      />
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Empty state hint -->
+@if (!hasData()) {
+  <mat-card class="empty-hint-card">
+    <mat-card-content>
+      <mat-icon>info</mat-icon>
+      <span>{{ 'DASHBOARD.EMPTY' | translate }}</span>
+    </mat-card-content>
+  </mat-card>
+}
+
+<!-- Alerts -->
+@if (alerts().length > 0) {
+  <mat-card class="alerts-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar color="warn">warning</mat-icon>
+      <mat-card-title>{{ 'DASHBOARD.ALERTS_TITLE' | translate }}</mat-card-title>
+      <mat-card-subtitle>{{ 'DASHBOARD.ALERTS_SUBTITLE' | translate }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @for (alert of alerts(); track alert.id) {
+        <div class="alert-item">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ alert.label }}: <strong>{{ alert.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</strong></span>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+}
+
+<!-- Tips -->
+<mat-card class="tips-card">
+  <mat-card-header>
+    <mat-icon mat-card-avatar>lightbulb</mat-icon>
+    <mat-card-title>{{ 'DASHBOARD.TIPS_TITLE' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="tips-grid">
+      @for (tip of tips; track tip.text) {
+        <div class="tip-item">
+          <mat-icon>{{ tip.icon }}</mat-icon>
+          <span>{{ tip.text | translate }}</span>
+        </div>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

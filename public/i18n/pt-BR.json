@@ -1,0 +1,120 @@
+{
+  "NAV": {
+    "DASHBOARD": "Painel",
+    "INCOME": "Receitas",
+    "EXPENSES": "Despesas",
+    "BUDGET": "Orçamento",
+    "REPORTS": "Relatórios"
+  },
+  "APP": {
+    "TITLE": "Controle Financeiro"
+  },
+  "DASHBOARD": {
+    "TITLE": "Painel",
+    "EMPTY": "Nenhum dado ainda. Comece adicionando sua <a routerLink='/income'>receita</a> e <a routerLink='/expenses'>despesas</a>.",
+    "HEALTH_LABEL": "Saúde Financeira",
+    "HEALTH_SUB": "Você está usando {{value}}% da sua renda neste mês",
+    "HEALTH_EXCELLENT": "Excelente",
+    "HEALTH_GOOD": "Bom",
+    "HEALTH_CAUTION": "Atenção",
+    "HEALTH_CRITICAL": "Crítico",
+    "TOTAL_INCOME": "Renda Total",
+    "TOTAL_EXPENSES": "Total de Despesas",
+    "BALANCE": "Saldo",
+    "USAGE": "Uso",
+    "ALERTS_TITLE": "Alertas de Despesas Variáveis",
+    "ALERTS_SUBTITLE": "Estas despesas representam mais de 10% da sua renda",
+    "TIPS_TITLE": "Dicas para Cortar Despesas Desnecessárias",
+    "FIRST_FORTNIGHT": "1ª Quinzena (dias 1–14)",
+    "SECOND_FORTNIGHT": "2ª Quinzena (dias 15–31)",
+    "PERIOD_INCOME": "Entradas",
+    "PERIOD_EXPENSES": "Saídas",
+    "PERIOD_BALANCE": "Saldo do período",
+    "DAYS_RANGE": "dias {{start}}–{{end}}",
+    "TIPS": {
+      "COOKING": "Cozinhe em casa com mais frequência — comer fora pode custar 3 a 5x mais por refeição.",
+      "SUBSCRIPTIONS": "Revise suas assinaturas mensalmente e cancele as que não usa.",
+      "GROCERY": "Planeje sua lista de compras com antecedência para evitar compras por impulso.",
+      "ENERGY": "Reduza o consumo de energia desligando aparelhos ociosos.",
+      "TRANSPORT": "Agrupe seus compromissos em uma única saída para economizar combustível.",
+      "SAVINGS": "Pague-se primeiro — automatize suas economias antes de gastar."
+    }
+  },
+  "INCOME": {
+    "TITLE": "Receitas",
+    "ADD": "Adicionar Fonte de Renda",
+    "EDIT": "Editar Fonte de Renda",
+    "LABEL": "Descrição (ex: Salário)",
+    "AMOUNT": "Valor",
+    "RECEIPT_DAY": "Dia de recebimento",
+    "DAY_PREFIX": "Dia ",
+    "SAVE": "Salvar",
+    "ADD_BTN": "Adicionar",
+    "CANCEL": "Cancelar",
+    "LIST_TITLE": "Fontes de Renda",
+    "TOTAL": "Total",
+    "EMPTY": "Nenhuma fonte de renda adicionada ainda.",
+    "COL_LABEL": "Descrição",
+    "COL_AMOUNT": "Valor"
+  },
+  "EXPENSES": {
+    "TITLE": "Despesas",
+    "ADD": "Adicionar Despesa",
+    "EDIT": "Editar Despesa",
+    "LABEL": "Descrição",
+    "AMOUNT": "Valor",
+    "CATEGORY": "Categoria",
+    "FIXED": "Despesa fixa (recorrente mensal)",
+    "DUE_DAY": "Dia de vencimento",
+    "SAVE": "Salvar",
+    "ADD_BTN": "Adicionar",
+    "CANCEL": "Cancelar",
+    "TAB_FIXED": "Fixas",
+    "TAB_VARIABLE": "Variáveis",
+    "EMPTY": "Nenhuma despesa adicionada ainda.",
+    "COL_LABEL": "Descrição",
+    "COL_CATEGORY": "Categoria",
+    "COL_AMOUNT": "Valor",
+    "CATEGORIES": {
+      "housing": "Moradia",
+      "transport": "Transporte",
+      "food": "Alimentação",
+      "health": "Saúde",
+      "education": "Educação",
+      "leisure": "Lazer",
+      "subscriptions": "Assinaturas",
+      "other": "Outros"
+    }
+  },
+  "BUDGET": {
+    "TITLE": "Orçamento — Planejamento Mensal",
+    "EMPTY": "Nenhuma despesa fixa ainda. Adicione-as na página de <a routerLink='/expenses'>Despesas</a> primeiro.",
+    "SCHEDULE_TITLE": "Agenda de Despesas Fixas",
+    "SCHEDULE_SUBTITLE": "Desmarque um mês para remover essa despesa do cálculo daquele mês",
+    "ANNUAL_TITLE": "Projeção Anual",
+    "EXPENSE_COL": "Despesa",
+    "CASHFLOW_TITLE": "Fluxo de Caixa",
+    "CASHFLOW_SUBTITLE": "Entradas e saídas ordenadas por dia",
+    "CASHFLOW_EMPTY": "Nenhum dado para exibir neste mês.",
+    "RUNNING_BALANCE": "Saldo acumulado",
+    "SELECT_MONTH": "Mês"
+  },
+  "REPORTS": {
+    "TITLE": "Relatórios e Análises",
+    "CHART_TITLE": "Progressão de Despesas por Mês",
+    "CHART_SUBTITLE": "Visão anual — despesas vs renda por mês",
+    "BREAKDOWN_TITLE": "Despesas por Categoria",
+    "BREAKDOWN_SUBTITLE": "% da renda mensal",
+    "ALERTS_TITLE": "Alertas de Despesas Variáveis",
+    "ALERTS_SUBTITLE": "Despesas que excedem 10% da renda mensal",
+    "EMPTY": "Nenhuma despesa adicionada ainda.",
+    "LEGEND_OK": "≤70% da renda",
+    "LEGEND_CAUTION": "70–90%",
+    "LEGEND_WARN": ">90%",
+    "OF_INCOME": "da renda"
+  },
+  "MONTHS": {
+    "SHORT": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+    "LONG": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+  }
+}

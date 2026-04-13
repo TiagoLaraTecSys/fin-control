@@ -1,0 +1,134 @@
+<h1 class="page-title">{{ 'REPORTS.TITLE' | translate }}</h1>
+
+<!-- ── Monthly Bar Chart ────────────────────────────────── -->
+<mat-card class="section-card">
+  <div class="section-header">
+    <div class="section-header-icon chart-icon">
+      <mat-icon>bar_chart</mat-icon>
+    </div>
+    <div>
+      <div class="section-title">{{ 'REPORTS.CHART_TITLE' | translate }}</div>
+      <div class="section-sub">{{ 'REPORTS.CHART_SUBTITLE' | translate }}</div>
+    </div>
+  </div>
+
+  <mat-card-content>
+    @if (annualProjection().every(s => s.totalExpenses === 0)) {
+      <div class="empty-state">
+        <mat-icon>bar_chart</mat-icon>
+        <p>{{ 'REPORTS.EMPTY' | translate }}</p>
+      </div>
+    } @else {
+      <div class="bar-chart">
+        @for (summary of annualProjection(); track summary.month; let i = $index) {
+          <div class="bar-col" [style.animation-delay]="(i * 40) + 'ms'">
+            <div class="bar-value-label">
+              @if (summary.totalExpenses > 0) {
+                {{ summary.totalExpenses | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}
+              }
+            </div>
+            <div class="bar-wrapper">
+              <div
+                class="bar"
+                [style.height.%]="(summary.totalExpenses / maxExpenses()) * 100"
+                [class.ok]="summary.usagePercent <= 70"
+                [class.caution]="summary.usagePercent > 70 && summary.usagePercent <= 90"
+                [class.danger]="summary.usagePercent > 90"
+              ></div>
+            </div>
+            <div class="bar-month">{{ months[summary.month] }}</div>
+            <div class="bar-pct"
+              [class.ok]="summary.usagePercent <= 70"
+              [class.caution]="summary.usagePercent > 70 && summary.usagePercent <= 90"
+              [class.danger]="summary.usagePercent > 90"
+            >{{ summary.usagePercent | number:'1.0-0':'pt-BR' }}%</div>
+          </div>
+        }
+      </div>
+
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot ok"></span> Saudável ≤70%</span>
+        <span class="legend-item"><span class="legend-dot caution"></span> Atenção 71–90%</span>
+        <span class="legend-item"><span class="legend-dot danger"></span> Crítico >90%</span>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
+
+<!-- ── Category Breakdown ────────────────────────────────── -->
+<mat-card class="section-card">
+  <div class="section-header">
+    <div class="section-header-icon breakdown-icon">
+      <mat-icon>donut_large</mat-icon>
+    </div>
+    <div>
+      <div class="section-title">{{ 'REPORTS.BREAKDOWN_TITLE' | translate }}</div>
+      <div class="section-sub">{{ 'REPORTS.BREAKDOWN_SUBTITLE' | translate }}</div>
+    </div>
+  </div>
+
+  <mat-card-content>
+    @if (categoryBreakdown().length === 0) {
+      <div class="empty-state">
+        <mat-icon>donut_large</mat-icon>
+        <p>{{ 'REPORTS.EMPTY' | translate }}</p>
+      </div>
+    } @else {
+      <div class="breakdown-list">
+        @for (item of categoryBreakdown(); track item.category; let i = $index) {
+          <div class="breakdown-row" [style.animation-delay]="(i * 50) + 'ms'">
+            <div class="br-icon" [style.background]="categoryGradient(item.category)">
+              <mat-icon>{{ categoryIcon(item.category) }}</mat-icon>
+            </div>
+            <div class="br-body">
+              <div class="br-top">
+                <span class="br-label">{{ 'EXPENSES.CATEGORIES.' + item.category | translate }}</span>
+                <span class="br-amount">{{ item.total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+              </div>
+              <div class="br-bar-track">
+                <div class="br-bar-fill" [style.width.%]="item.percent > 100 ? 100 : item.percent"
+                  [style.background]="categoryGradient(item.category)"></div>
+              </div>
+              <div class="br-pct">{{ item.percent | number:'1.0-1':'pt-BR' }}% da renda</div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
+
+<!-- ── Variable Alerts ────────────────────────────────────── -->
+@if (alerts().length > 0) {
+  <mat-card class="section-card alerts-section">
+    <div class="section-header">
+      <div class="section-header-icon alerts-icon">
+        <mat-icon>warning_amber</mat-icon>
+      </div>
+      <div>
+        <div class="section-title">{{ 'REPORTS.ALERTS_TITLE' | translate }}</div>
+        <div class="section-sub">{{ 'REPORTS.ALERTS_SUBTITLE' | translate }}</div>
+      </div>
+    </div>
+
+    <mat-card-content>
+      <div class="alerts-list">
+        @for (alert of alerts(); track alert.id; let i = $index) {
+          <div class="alert-row" [style.animation-delay]="(i * 50) + 'ms'">
+            <div class="alert-icon-wrap">
+              <mat-icon>error_outline</mat-icon>
+            </div>
+            <div class="alert-body">
+              <span class="alert-label">{{ alert.label }}</span>
+              <span class="alert-sub">{{ 'REPORTS.VARIABLE_EXPENSE' | translate }}</span>
+            </div>
+            <div class="alert-right">
+              <span class="alert-amount">{{ alert.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+              <span class="alert-pct">{{ (alert.amount / totalIncome()) * 100 | number:'1.0-1':'pt-BR' }}% {{ 'REPORTS.OF_INCOME' | translate }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+}
