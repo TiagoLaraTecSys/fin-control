@@ -13,7 +13,7 @@
   </div>
 
   <mat-card-content>
-    @if (annualProjection().every(s => s.totalExpenses === 0)) {
+    @if (isAnnualProjectionEmpty()) {
       <div class="empty-state">
         <mat-icon>bar_chart</mat-icon>
         <p>{{ 'REPORTS.EMPTY' | translate }}</p>

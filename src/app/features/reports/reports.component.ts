@@ -95,4 +95,8 @@ export class ReportsComponent {
     };
     return gradients[category] ?? 'linear-gradient(135deg,#64748b,#94a3b8)';
   }
+
+  isAnnualProjectionEmpty(): boolean {
+    return this.annualProjection().every(s => s.totalExpenses === 0);
+  }
 }
