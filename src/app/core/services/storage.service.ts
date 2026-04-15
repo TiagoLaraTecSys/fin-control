@@ -6,7 +6,7 @@ import { FinanceState } from '../models/finance.models';
 const LOCAL_KEY = 'financial_control_state';
 const API = '/api/data';
 
-const EMPTY: FinanceState = { incomes: [], expenses: [] };
+const EMPTY: FinanceState = { incomes: [], expenses: [], startMonth: new Date().getMonth() };
 
 @Injectable({ providedIn: 'root' })
 export class StorageService {

@@ -1,8 +1,10 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { TranslateModule } from '@ngx-translate/core';
 import { FinanceService } from '../../core/services/finance.service';
 
@@ -18,6 +20,8 @@ interface Tip {
     MatCardModule,
     MatIconModule,
     MatProgressBarModule,
+    MatSelectModule,
+    MatFormFieldModule,
     TranslateModule,
   ],
   templateUrl: './dashboard.component.html',
@@ -26,14 +30,21 @@ interface Tip {
 export class DashboardComponent {
   private finance = inject(FinanceService);
 
-  readonly today = new Date();
-  readonly currentMonth = this.today.getMonth();
-  readonly currentYear = this.today.getFullYear();
+  private today = new Date();
+  readonly years = Array.from({ length: 2030 - this.today.getFullYear() + 1 }, (_, i) => this.today.getFullYear() + i);
+  readonly monthOptions = [
+    { value: 0, label: 'Janeiro' }, { value: 1, label: 'Fevereiro' }, { value: 2, label: 'Março' },
+    { value: 3, label: 'Abril' }, { value: 4, label: 'Maio' }, { value: 5, label: 'Junho' },
+    { value: 6, label: 'Julho' }, { value: 7, label: 'Agosto' }, { value: 8, label: 'Setembro' },
+    { value: 9, label: 'Outubro' }, { value: 10, label: 'Novembro' }, { value: 11, label: 'Dezembro' },
+  ];
+  readonly selectedYear = signal(this.today.getFullYear());
+  readonly selectedMonth = signal(this.today.getMonth());
 
-  readonly summary = computed(() => this.finance.summaryForMonth(this.currentMonth, this.currentYear));
+  readonly summary = computed(() => this.finance.summaryForMonth(this.selectedMonth(), this.selectedYear()));
   readonly alerts = computed(() => this.finance.variableAlerts());
   readonly hasData = computed(() => this.finance.incomes().length > 0);
-  readonly fortnights = computed(() => this.finance.cashFlowForMonth(this.currentMonth, this.currentYear));
+  readonly fortnights = computed(() => this.finance.cashFlowForMonth(this.selectedMonth(), this.selectedYear()));
 
   readonly healthStatus = computed(() => {
     const usage = this.summary().usagePercent;

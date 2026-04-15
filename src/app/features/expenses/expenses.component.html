@@ -54,6 +54,23 @@
             <input matInput type="number" formControlName="dueDay" min="1" max="31" placeholder="1–31" />
             <mat-hint>Dia do mês do vencimento</mat-hint>
           </mat-form-field>
+        } @else {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'EXPENSES.DATE' | translate }}</mat-label>
+            <mat-icon matPrefix>calendar_today</mat-icon>
+            <input matInput [matDatepicker]="expensePicker" formControlName="date"
+                   [placeholder]="(today | date:'dd/MM/yyyy':'':'pt-BR') ?? ''" readonly />
+            <mat-datepicker-toggle matIconSuffix [for]="expensePicker"></mat-datepicker-toggle>
+            <mat-datepicker #expensePicker></mat-datepicker>
+            <mat-hint>Hoje: {{ today | date:'dd/MM/yyyy':'':'pt-BR' }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'EXPENSES.OCCURRENCES' | translate }}</mat-label>
+            <mat-icon matPrefix>repeat</mat-icon>
+            <input matInput type="number" formControlName="occurrences" min="1" max="60" placeholder="1" />
+            <mat-hint>Meses que se repete a partir da data inicial</mat-hint>
+          </mat-form-field>
         }
 
         <div class="form-actions">
@@ -134,26 +151,44 @@
       <div class="list-header">
         <div>
           <div class="list-title">{{ 'EXPENSES.TAB_VARIABLE' | translate }}</div>
-          <div class="list-sub">{{ variableExpenses().length }} despesa(s) variável(is)</div>
+          <div class="list-sub">{{ filteredVariableExpenses().length }} despesa(s) variável(is)</div>
         </div>
-        @if (variableExpenses().length > 0) {
+        @if (filteredVariableExpenses().length > 0) {
           <div class="total-badge expenses-badge">
-            <span class="total-label">Total</span>
+            <span class="total-label">Total{{ selectedMonth() !== null ? ' mês' : '' }}</span>
             <span class="total-value">
-              {{ variableExpenses() | expensesTotal | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
+              {{ filteredVariableTotal() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}
             </span>
           </div>
         }
       </div>
+
+      <div class="card-filter-bar">
+        <mat-form-field appearance="outline" class="filter-select">
+          <mat-select [value]="selectedMonth()" (selectionChange)="selectedMonth.set($event.value)">
+            @for (m of monthOptions; track m.value) {
+              <mat-option [value]="m.value">{{ m.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-select">
+          <mat-select [value]="selectedYear()" (selectionChange)="selectedYear.set($event.value)">
+            @for (y of years; track y) {
+              <mat-option [value]="y">{{ y }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
       <mat-card-content>
-        @if (variableExpenses().length === 0) {
+        @if (filteredVariableExpenses().length === 0) {
           <div class="empty-state">
             <mat-icon>receipt</mat-icon>
-            <p>{{ 'EXPENSES.EMPTY' | translate }}</p>
+            <p>{{ selectedMonth() !== null ? 'Nenhuma despesa variável neste mês.' : ('EXPENSES.EMPTY' | translate) }}</p>
           </div>
         } @else {
           <div class="expense-list">
-            @for (row of variableExpenses(); track row.id; let i = $index) {
+            @for (row of filteredVariableExpenses(); track row.id; let i = $index) {
               <div class="expense-item" [style.animation-delay]="(i * 50) + 'ms'">
                 <div class="item-icon" [style.background]="categoryGradient(row.category)">
                   <mat-icon>{{ categoryIcon(row.category) }}</mat-icon>
@@ -164,6 +199,18 @@
                     <span class="category-pill" [style.background]="categoryBg(row.category)" [style.color]="categoryColor(row.category)">
                       {{ categoryLabel(row.category) }}
                     </span>
+                    @if (row.date) {
+                      <span class="day-badge">
+                        <mat-icon>calendar_today</mat-icon>
+                        {{ row.date | date:'dd/MM/yy':'':'pt-BR' }}
+                      </span>
+                    }
+                    @if (row.occurrences && row.occurrences > 1) {
+                      <span class="occurrence-badge">
+                        <mat-icon>repeat</mat-icon>
+                        {{ row.occurrences }}x
+                      </span>
+                    }
                   </div>
                 </div>
                 <div class="item-amount expense-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>

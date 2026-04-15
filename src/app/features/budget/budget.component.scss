@@ -274,6 +274,25 @@
 
   .sg-label  { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sg-amount { font-size: 11px; color: var(--text-secondary); }
+  .sg-income-amount { color: #059669; }
+}
+
+.sg-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 4px 4px;
+  border-top: 1px solid var(--border);
+  grid-column: 1 / -1;
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+
+  &.income-section-label  { color: #059669; }
+  &.expense-section-label { color: #be123c; }
 }
 
 .sg-month-col {
@@ -314,7 +333,18 @@
     color: white;
     box-shadow: 0 2px 8px rgba(16,185,129,.3);
   }
+
+  &.income-toggle.active {
+    background: linear-gradient(135deg, #10b981, #34d399);
+  }
+
+  &.before-start {
+    opacity: 0.3;
+    pointer-events: none;
+  }
 }
+
+.sg-month-col.before-start { opacity: 0.3; }
 
 /* ── Annual grid ─────────────────────────────────────────── */
 .annual-grid {
@@ -380,6 +410,30 @@
   letter-spacing: -0.3px;
 
   &.positive { color: #059669; }
+}
+
+.am-accumulated {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #be123c;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #fff1f2;
+  letter-spacing: -0.2px;
+
+  mat-icon { font-size: 11px; width: 11px; height: 11px; }
+
+  &.positive {
+    color: #059669;
+    background: #f0fdf4;
+  }
+  &.negative {
+    color: #be123c;
+    background: #fff1f2;
+  }
 }
 
 .am-pct {

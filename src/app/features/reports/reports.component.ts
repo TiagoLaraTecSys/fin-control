@@ -1,17 +1,21 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { TranslateModule } from '@ngx-translate/core';
 import { FinanceService } from '../../core/services/finance.service';
 import { ExpenseCategory } from '../../core/models/finance.models';
+
+import { Expense } from '../../core/models/finance.models';
 
 interface CategoryBreakdown {
   category: ExpenseCategory;
   label: string;
   total: number;
   percent: number;
+  expenses: Expense[];
 }
 
 @Component({
@@ -20,21 +24,33 @@ interface CategoryBreakdown {
     CommonModule,
     MatCardModule,
     MatIconModule,
-    MatProgressBarModule,
+    MatSelectModule,
+    MatFormFieldModule,
     TranslateModule,
   ],
   templateUrl: './reports.component.html',
   styleUrl: './reports.component.scss',
 })
 export class ReportsComponent {
+  readonly Math = Math;
   private finance = inject(FinanceService);
 
   readonly months = [
     'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
     'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
   ];
+  readonly monthOptions = [
+    { value: null as number | null, label: 'Todos os meses' },
+    { value: 0, label: 'Janeiro' }, { value: 1, label: 'Fevereiro' }, { value: 2, label: 'Março' },
+    { value: 3, label: 'Abril' }, { value: 4, label: 'Maio' }, { value: 5, label: 'Junho' },
+    { value: 6, label: 'Julho' }, { value: 7, label: 'Agosto' }, { value: 8, label: 'Setembro' },
+    { value: 9, label: 'Outubro' }, { value: 10, label: 'Novembro' }, { value: 11, label: 'Dezembro' },
+  ];
+  readonly years = Array.from({ length: 2030 - new Date().getFullYear() + 1 }, (_, i) => new Date().getFullYear() + i);
+  readonly selectedYear = signal(new Date().getFullYear());
+  readonly selectedCategoryMonth = signal<number | null>(new Date().getMonth());
 
-  readonly annualProjection = computed(() => this.finance.annualProjection());
+  readonly annualProjection = computed(() => this.finance.annualProjection(this.selectedYear()));
   readonly alerts = computed(() => this.finance.variableAlerts());
   readonly totalIncome = this.finance.totalIncome;
 
@@ -42,27 +58,79 @@ export class ReportsComponent {
     Math.max(...this.annualProjection().map(s => s.totalExpenses), 1)
   );
 
+  readonly maxAbsAccumulated = computed(() =>
+    Math.max(...this.annualProjection().map(s => Math.abs(s.accumulatedBalance)), 1)
+  );
+
   readonly categoryBreakdown = computed((): CategoryBreakdown[] => {
-    const expenses = this.finance.expenses();
-    const totalIncome = this.totalIncome();
-    const map = new Map<ExpenseCategory, number>();
-    for (const e of expenses) {
-      map.set(e.category, (map.get(e.category) ?? 0) + e.amount);
+    const month = this.selectedCategoryMonth();
+    const year = this.selectedYear();
+    let expenses: ReturnType<typeof this.finance.expenses>;
+    if (month !== null) {
+      expenses = this.finance.expensesForMonth(month, year);
+    } else {
+      const start = this.finance.startMonth();
+      const all: typeof expenses = [];
+      for (let m = start; m < 12; m++) {
+        all.push(...this.finance.expensesForMonth(m, year));
+      }
+      expenses = all;
     }
-    const labels: Record<ExpenseCategory, string> = {
-      housing: 'Housing', transport: 'Transport', food: 'Food',
-      health: 'Health', education: 'Education', leisure: 'Leisure',
-      subscriptions: 'Subscriptions', other: 'Other',
-    };
-    return Array.from(map.entries())
+    const totalIncome = this.totalIncome();
+
+    // Deduplicate by id (fixed expenses repeat across months in "all year" view)
+    const seenCount = new Map<string, number>();
+    for (const e of expenses) {
+      seenCount.set(e.id, (seenCount.get(e.id) ?? 0) + 1);
+    }
+    const unique = Array.from(new Map(expenses.map(e => [e.id, e])).values());
+
+    // Group by category
+    const catTotals = new Map<ExpenseCategory, number>();
+    const catExpenses = new Map<ExpenseCategory, Expense[]>();
+    for (const e of unique) {
+      const count = seenCount.get(e.id) ?? 1;
+      catTotals.set(e.category, (catTotals.get(e.category) ?? 0) + e.amount * count);
+      if (!catExpenses.has(e.category)) catExpenses.set(e.category, []);
+      catExpenses.get(e.category)!.push(e);
+    }
+
+    return Array.from(catTotals.entries())
       .map(([category, total]) => ({
         category,
-        label: labels[category],
+        label: category,
         total,
         percent: totalIncome > 0 ? (total / totalIncome) * 100 : 0,
+        expenses: (catExpenses.get(category) ?? []).sort((a, b) => b.amount - a.amount),
       }))
       .sort((a, b) => b.total - a.total);
   });
+
+  readonly expandedCategories = signal<Set<ExpenseCategory>>(new Set());
+
+  toggleCategory(cat: ExpenseCategory): void {
+    this.expandedCategories.update(s => {
+      const next = new Set(s);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  }
+
+  isCategoryExpanded(cat: ExpenseCategory): boolean {
+    return this.expandedCategories().has(cat);
+  }
+
+  expenseMonthCount(expenseId: string): number {
+    const month = this.selectedCategoryMonth();
+    const year = this.selectedYear();
+    if (month !== null) return 1;
+    const start = this.finance.startMonth();
+    let count = 0;
+    for (let m = start; m < 12; m++) {
+      if (this.finance.expensesForMonth(m, year).some(e => e.id === expenseId)) count++;
+    }
+    return count;
+  }
 
   categoryColor(category: ExpenseCategory): string {
     const colors: Record<ExpenseCategory, string> = {

@@ -69,6 +69,42 @@ body {
   animation: fadeSlideUp 0.35s ease both;
 }
 
+/* ─── Global page filter bar ─────────────────────────────────── */
+.page-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  .filter-select {
+    min-width: 120px;
+
+    .mat-mdc-form-field-subscript-wrapper { display: none; }
+  }
+
+  .filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+}
+
+/* ─── Inline filter bar inside a card ───────────────────────── */
+.card-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 0;
+  flex-wrap: wrap;
+
+  .filter-select {
+    min-width: 110px;
+    .mat-mdc-form-field-subscript-wrapper { display: none; }
+  }
+}
+
 /* ─── Card overrides ─────────────────────────────────────────── */
 mat-card, .mat-mdc-card {
   border-radius: var(--radius) !important;

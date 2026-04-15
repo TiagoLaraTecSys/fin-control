@@ -1,4 +1,4 @@
-import { Component, inject, signal, Pipe, PipeTransform } from '@angular/core';
+import { Component, inject, signal, computed, Pipe, PipeTransform } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FinanceService } from '../../core/services/finance.service';
 import { Expense, ExpenseCategory } from '../../core/models/finance.models';
@@ -42,6 +43,7 @@ const CATEGORY_META: Record<ExpenseCategory, { icon: string; gradient: string; b
     MatCheckboxModule,
     MatButtonModule,
     MatIconModule,
+    MatDatepickerModule,
     TranslateModule,
     ExpensesTotalPipe,
   ],
@@ -56,6 +58,43 @@ export class ExpensesComponent {
   readonly fixedExpenses = this.finance.fixedExpenses;
   readonly variableExpenses = this.finance.variableExpenses;
 
+  readonly monthOptions = [
+    { value: null, label: 'Todos os meses' },
+    { value: 0, label: 'Janeiro' }, { value: 1, label: 'Fevereiro' }, { value: 2, label: 'Março' },
+    { value: 3, label: 'Abril' }, { value: 4, label: 'Maio' }, { value: 5, label: 'Junho' },
+    { value: 6, label: 'Julho' }, { value: 7, label: 'Agosto' }, { value: 8, label: 'Setembro' },
+    { value: 9, label: 'Outubro' }, { value: 10, label: 'Novembro' }, { value: 11, label: 'Dezembro' },
+  ];
+  readonly currentYear = new Date().getFullYear();
+  readonly years = Array.from({ length: 2030 - this.currentYear + 1 }, (_, i) => this.currentYear + i);
+  readonly selectedYear = signal<number>(new Date().getFullYear());
+  readonly selectedMonth = signal<number | null>(new Date().getMonth());
+
+  readonly today = new Date();
+
+  readonly filteredVariableExpenses = computed(() => {
+    const m = this.selectedMonth();
+    const y = this.selectedYear();
+    if (m === null) {
+      // all months of the selected year
+      return this.variableExpenses().filter(e => {
+        if (!e.date) return false;
+        const origin = new Date(e.date + 'T00:00:00');
+        const originIndex = origin.getFullYear() * 12 + origin.getMonth();
+        const occurrences = e.occurrences ?? 1;
+        // overlaps with year y if any month in [originIndex, originIndex+occ) falls in year y
+        const yearStart = y * 12;
+        const yearEnd = yearStart + 12;
+        return originIndex < yearEnd && originIndex + occurrences > yearStart;
+      });
+    }
+    return this.finance.expensesForMonth(m, y).filter(e => !e.isFixed);
+  });
+
+  readonly filteredVariableTotal = computed(() =>
+    this.filteredVariableExpenses().reduce((s, e) => s + e.amount, 0)
+  );
+
   readonly categories: ExpenseCategory[] = [
     'housing', 'transport', 'food', 'health', 'education', 'leisure', 'subscriptions', 'other',
   ];
@@ -68,33 +107,55 @@ export class ExpensesComponent {
     category: ['other' as ExpenseCategory, Validators.required],
     isFixed: [true],
     dueDay: [1, [Validators.required, Validators.min(1), Validators.max(31)]],
+    date: [new Date() as Date | null],
+    occurrences: [1, [Validators.required, Validators.min(1), Validators.max(60)]],
   });
 
   get isFixedValue(): boolean {
     return !!this.form.get('isFixed')?.value;
   }
 
+  private toIso(d: Date | null): string {
+    const date = d ?? new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
   submit(): void {
     if (this.form.invalid) return;
-    const { label, amount, category, isFixed, dueDay } = this.form.getRawValue();
+    const { label, amount, category, isFixed, dueDay, date, occurrences } = this.form.getRawValue();
     const id = this.editingId();
     if (id) {
-      this.finance.updateExpense(id, { label: label!, amount: amount!, category: category!, isFixed: isFixed!, dueDay: isFixed ? (dueDay ?? 1) : 1 });
+      this.finance.updateExpense(id, {
+        label: label!, amount: amount!, category: category!, isFixed: isFixed!,
+        dueDay: isFixed ? (dueDay ?? 1) : 1,
+        date: isFixed ? undefined : this.toIso(date),
+        occurrences: isFixed ? undefined : (occurrences ?? 1),
+      });
       this.editingId.set(null);
     } else {
-      this.finance.addExpense({ label: label!, amount: amount!, category: category!, isFixed: isFixed!, activeMonths: [], dueDay: isFixed ? (dueDay ?? 1) : 1 });
+      this.finance.addExpense({
+        label: label!, amount: amount!, category: category!, isFixed: isFixed!, activeMonths: [],
+        dueDay: isFixed ? (dueDay ?? 1) : 1,
+        date: isFixed ? undefined : this.toIso(date),
+        occurrences: isFixed ? undefined : (occurrences ?? 1),
+      });
     }
-    this.form.reset({ category: 'other', isFixed: true, dueDay: 1 });
+    this.form.reset({ category: 'other', isFixed: true, dueDay: 1, date: new Date(), occurrences: 1 });
   }
 
   edit(expense: Expense): void {
     this.editingId.set(expense.id);
-    this.form.setValue({ label: expense.label, amount: expense.amount, category: expense.category, isFixed: expense.isFixed, dueDay: expense.dueDay ?? 1 });
+    this.form.setValue({
+      label: expense.label, amount: expense.amount, category: expense.category,
+      isFixed: expense.isFixed, dueDay: expense.dueDay ?? 1,
+      date: expense.date ? new Date(expense.date + 'T00:00:00') : new Date(),
+      occurrences: expense.occurrences ?? 1,
+    });
   }
 
   cancelEdit(): void {
     this.editingId.set(null);
-    this.form.reset({ category: 'other', isFixed: true, dueDay: 1 });
+    this.form.reset({ category: 'other', isFixed: true, dueDay: 1, date: new Date(), occurrences: 1 });
   }
 
   remove(id: string): void {

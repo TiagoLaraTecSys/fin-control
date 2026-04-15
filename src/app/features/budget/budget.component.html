@@ -12,15 +12,22 @@
     </div>
   </div>
 
-  <!-- Month pills -->
-  <div class="month-pills">
-    @for (m of months; track m.value) {
-      <button
-        class="month-pill"
-        [class.active]="selectedMonth() === m.value"
-        (click)="selectedMonth.set(m.value)"
-      >{{ m.label.slice(0, 3) }}</button>
-    }
+  <!-- Month + Year selects -->
+  <div class="card-filter-bar">
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-select [value]="selectedMonth()" (selectionChange)="selectedMonth.set($event.value)">
+        @for (m of months; track m.value) {
+          <mat-option [value]="m.value">{{ m.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-select [value]="selectedYear()" (selectionChange)="selectedYear.set($event.value)">
+        @for (y of years; track y) {
+          <mat-option [value]="y">{{ y }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <mat-card-content>
@@ -65,7 +72,7 @@
 </mat-card>
 
 <!-- ── Agenda Mensal ───────────────────────────────────── -->
-@if (fixedExpenses().length > 0) {
+@if (fixedExpenses().length > 0 || incomes().length > 0) {
   <mat-card class="section-card">
     <div class="section-header">
       <div class="section-header-icon schedule-icon">
@@ -81,29 +88,65 @@
       <div class="schedule-grid">
         <div class="sg-header">
           <div class="sg-expense-col">{{ 'BUDGET.EXPENSE_COL' | translate }}</div>
-          @for (m of monthShortKeys; track m) {
-            <div class="sg-month-col">{{ m }}</div>
+          @for (m of monthShortKeys; track m; let i = $index) {
+            <div class="sg-month-col" [class.before-start]="i < startMonth()">{{ m }}</div>
           }
         </div>
-        @for (expense of fixedExpenses(); track expense.id) {
-          <div class="sg-row">
-            <div class="sg-expense-col">
-              <span class="sg-label">{{ expense.label }}</span>
-              <span class="sg-amount">{{ expense.amount | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
-            </div>
-            @for (m of monthShortKeys; track m; let i = $index) {
-              <div class="sg-month-col">
-                <button
-                  class="month-toggle"
-                  [class.active]="isActive(expense.id, i)"
-                  (click)="toggle(expense.id, i)"
-                  [title]="m"
-                >
-                  <mat-icon>{{ isActive(expense.id, i) ? 'check' : 'remove' }}</mat-icon>
-                </button>
-              </div>
-            }
+
+        <!-- Incomes section -->
+        @if (incomes().length > 0) {
+          <div class="sg-section-label income-section-label">
+            <mat-icon>arrow_downward</mat-icon> Receitas
           </div>
+          @for (income of incomes(); track income.id) {
+            <div class="sg-row">
+              <div class="sg-expense-col">
+                <span class="sg-label">{{ income.label }}</span>
+                <span class="sg-amount sg-income-amount">{{ income.amount | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
+              </div>
+              @for (m of monthShortKeys; track m; let i = $index) {
+                <div class="sg-month-col">
+                  <button
+                    class="month-toggle income-toggle"
+                    [class.active]="isIncomeActive(income.id, i)"
+                    [class.before-start]="i < startMonth()"
+                    (click)="toggleIncome(income.id, i)"
+                    [title]="m"
+                  >
+                    <mat-icon>{{ isIncomeActive(income.id, i) ? 'check' : 'remove' }}</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        <!-- Expenses section -->
+        @if (fixedExpenses().length > 0) {
+          <div class="sg-section-label expense-section-label">
+            <mat-icon>arrow_upward</mat-icon> Despesas Fixas
+          </div>
+          @for (expense of fixedExpenses(); track expense.id) {
+            <div class="sg-row">
+              <div class="sg-expense-col">
+                <span class="sg-label">{{ expense.label }}</span>
+                <span class="sg-amount">{{ expense.amount | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</span>
+              </div>
+              @for (m of monthShortKeys; track m; let i = $index) {
+                <div class="sg-month-col">
+                  <button
+                    class="month-toggle"
+                    [class.active]="isActive(expense.id, i)"
+                    [class.before-start]="i < startMonth()"
+                    (click)="toggle(expense.id, i)"
+                    [title]="m"
+                  >
+                    <mat-icon>{{ isActive(expense.id, i) ? 'check' : 'remove' }}</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          }
         }
       </div>
     </mat-card-content>
@@ -124,7 +167,7 @@
     <mat-card-content>
       <div class="annual-grid">
         @for (summary of annualProjection(); track summary.month; let i = $index) {
-          <div class="annual-month" [class.negative]="summary.balance < 0" [style.animation-delay]="(i * 40) + 'ms'">
+          <div class="annual-month" [class.negative]="summary.accumulatedBalance < 0" [style.animation-delay]="(i * 40) + 'ms'">
             <div class="am-name">{{ monthShortKeys[summary.month] }}</div>
             <div class="am-usage-bar">
               <div class="am-usage-fill"
@@ -138,6 +181,12 @@
             <div class="am-balance" [class.positive]="summary.balance >= 0">
               {{ summary.balance | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}
             </div>
+            @if (i > 0) {
+              <div class="am-accumulated" [class.positive]="summary.accumulatedBalance >= 0" [class.negative]="summary.accumulatedBalance < 0">
+                <mat-icon>account_balance_wallet</mat-icon>
+                {{ summary.accumulatedBalance | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}
+              </div>
+            }
             <div class="am-pct" [class.ok]="summary.usagePercent <= 70" [class.caution]="summary.usagePercent > 70 && summary.usagePercent <= 90" [class.danger]="summary.usagePercent > 90">
               {{ summary.usagePercent | number:'1.0-0':'pt-BR' }}%
             </div>

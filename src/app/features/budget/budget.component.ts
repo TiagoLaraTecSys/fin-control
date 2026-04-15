@@ -41,19 +41,38 @@ export class BudgetComponent {
   ];
 
   readonly months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: this.monthKeys[i] }));
+  readonly years = Array.from({ length: 2030 - new Date().getFullYear() + 1 }, (_, i) => new Date().getFullYear() + i);
 
+  readonly selectedYear = signal<number>(new Date().getFullYear());
   readonly selectedMonth = signal<number>(new Date().getMonth());
 
+  readonly incomes = this.finance.fixedIncomes;
   readonly fixedExpenses = this.finance.fixedExpenses;
-  readonly annualProjection = computed(() => this.finance.annualProjection());
-  readonly cashFlowEvents = computed(() =>
-    this.finance.cashFlowEventsForMonth(this.selectedMonth())
-  );
+  readonly startMonth = this.finance.startMonth;
+  readonly annualProjection = computed(() => this.finance.annualProjection(this.selectedYear()));
+
+  readonly cashFlowEvents = computed(() => {
+    const month = this.selectedMonth();
+    const year = this.selectedYear();
+    const projection = this.annualProjection();
+    const prevBalance = month > 0 ? projection[month - 1].accumulatedBalance : 0;
+    return this.finance.cashFlowEventsForMonth(month, year, prevBalance);
+  });
 
   isActive(expenseId: string, month: number): boolean {
     const expense = this.fixedExpenses().find(e => e.id === expenseId);
     if (!expense) return false;
     return expense.activeMonths.length === 0 || expense.activeMonths.includes(month);
+  }
+
+  isIncomeActive(incomeId: string, month: number): boolean {
+    const income = this.incomes().find(i => i.id === incomeId);
+    if (!income) return false;
+    return income.activeMonths.length === 0 || income.activeMonths.includes(month);
+  }
+
+  toggleIncome(incomeId: string, month: number): void {
+    this.finance.toggleIncomeMonth(incomeId, month);
   }
 
   toggle(expenseId: string, month: number): void {

@@ -1,4 +1,22 @@
-<h1 class="page-title">{{ 'DASHBOARD.TITLE' | translate }} — {{ today | date:'MMMM':'':'pt-BR' }} {{ currentYear }}</h1>
+<h1 class="page-title">{{ 'DASHBOARD.TITLE' | translate }}</h1>
+
+<div class="page-filter-bar">
+  <span class="filter-label">Período:</span>
+  <mat-form-field appearance="outline" class="filter-select">
+    <mat-select [value]="selectedMonth()" (selectionChange)="selectedMonth.set($event.value)">
+      @for (m of monthOptions; track m.value) {
+        <mat-option [value]="m.value">{{ m.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="filter-select">
+    <mat-select [value]="selectedYear()" (selectionChange)="selectedYear.set($event.value)">
+      @for (y of years; track y) {
+        <mat-option [value]="y">{{ y }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
 
 <!-- Health Status -->
 <div class="health-banner" [class]="healthStatus().cssClass">

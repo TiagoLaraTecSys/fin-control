@@ -1,5 +1,16 @@
 <h1 class="page-title">{{ 'REPORTS.TITLE' | translate }}</h1>
 
+<div class="page-filter-bar">
+  <span class="filter-label">Ano:</span>
+  <mat-form-field appearance="outline" class="filter-select">
+    <mat-select [value]="selectedYear()" (selectionChange)="selectedYear.set($event.value)">
+      @for (y of years; track y) {
+        <mat-option [value]="y">{{ y }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
 <!-- ── Monthly Bar Chart ────────────────────────────────── -->
 <mat-card class="section-card">
   <div class="section-header">
@@ -42,6 +53,13 @@
               [class.caution]="summary.usagePercent > 70 && summary.usagePercent <= 90"
               [class.danger]="summary.usagePercent > 90"
             >{{ summary.usagePercent | number:'1.0-0':'pt-BR' }}%</div>
+            @if (i > 0) {
+              <div class="bar-accumulated"
+                [class.positive]="summary.accumulatedBalance >= 0"
+                [class.negative]="summary.accumulatedBalance < 0"
+                [title]="'Saldo acumulado até ' + months[summary.month]"
+              >{{ summary.accumulatedBalance | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</div>
+            }
           </div>
         }
       </div>
@@ -50,6 +68,68 @@
         <span class="legend-item"><span class="legend-dot ok"></span> Saudável ≤70%</span>
         <span class="legend-item"><span class="legend-dot caution"></span> Atenção 71–90%</span>
         <span class="legend-item"><span class="legend-dot danger"></span> Crítico >90%</span>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
+
+<!-- ── Accumulated Balance Progression ───────────────────── -->
+<mat-card class="section-card">
+  <div class="section-header">
+    <div class="section-header-icon progression-icon">
+      <mat-icon>trending_up</mat-icon>
+    </div>
+    <div>
+      <div class="section-title">Progressão do Saldo Acumulado</div>
+      <div class="section-sub">Como seu saldo evolui mês a mês ao longo do ano</div>
+    </div>
+  </div>
+
+  <mat-card-content>
+    @if (isAnnualProjectionEmpty()) {
+      <div class="empty-state">
+        <mat-icon>trending_up</mat-icon>
+        <p>{{ 'REPORTS.EMPTY' | translate }}</p>
+      </div>
+    } @else {
+      <div class="progression-chart">
+        <!-- zero baseline -->
+        <div class="baseline-label">R$0</div>
+        <div class="progression-rows">
+          @for (summary of annualProjection(); track summary.month; let i = $index) {
+            <div class="prog-row" [style.animation-delay]="(i * 50) + 'ms'">
+              <div class="prog-month">{{ months[summary.month] }}</div>
+              <div class="prog-bars">
+                <!-- negative side (left) -->
+                <div class="prog-neg-side">
+                  @if (summary.accumulatedBalance < 0) {
+                    <div class="prog-bar neg"
+                      [style.width.%]="(Math.abs(summary.accumulatedBalance) / maxAbsAccumulated()) * 100">
+                    </div>
+                  }
+                </div>
+                <!-- center dot -->
+                <div class="prog-center-dot"
+                  [class.positive]="summary.accumulatedBalance >= 0"
+                  [class.negative]="summary.accumulatedBalance < 0">
+                </div>
+                <!-- positive side (right) -->
+                <div class="prog-pos-side">
+                  @if (summary.accumulatedBalance > 0) {
+                    <div class="prog-bar pos"
+                      [style.width.%]="(summary.accumulatedBalance / maxAbsAccumulated()) * 100">
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="prog-value"
+                [class.positive]="summary.accumulatedBalance >= 0"
+                [class.negative]="summary.accumulatedBalance < 0">
+                {{ summary.accumulatedBalance | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}
+              </div>
+            </div>
+          }
+        </div>
       </div>
     }
   </mat-card-content>
@@ -67,6 +147,23 @@
     </div>
   </div>
 
+  <div class="card-filter-bar">
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-select [value]="selectedCategoryMonth()" (selectionChange)="selectedCategoryMonth.set($event.value)">
+        @for (m of monthOptions; track m.value) {
+          <mat-option [value]="m.value">{{ m.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-select">
+      <mat-select [value]="selectedYear()" (selectionChange)="selectedYear.set($event.value)">
+        @for (y of years; track y) {
+          <mat-option [value]="y">{{ y }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
   <mat-card-content>
     @if (categoryBreakdown().length === 0) {
       <div class="empty-state">
@@ -76,21 +173,67 @@
     } @else {
       <div class="breakdown-list">
         @for (item of categoryBreakdown(); track item.category; let i = $index) {
-          <div class="breakdown-row" [style.animation-delay]="(i * 50) + 'ms'">
-            <div class="br-icon" [style.background]="categoryGradient(item.category)">
-              <mat-icon>{{ categoryIcon(item.category) }}</mat-icon>
-            </div>
-            <div class="br-body">
-              <div class="br-top">
-                <span class="br-label">{{ 'EXPENSES.CATEGORIES.' + item.category | translate }}</span>
-                <span class="br-amount">{{ item.total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+          <div class="breakdown-entry" [class.is-expanded]="isCategoryExpanded(item.category)"
+               [style.animation-delay]="(i * 50) + 'ms'">
+
+            <!-- ── header row ── -->
+            <div class="breakdown-row" (click)="toggleCategory(item.category)">
+              <div class="br-icon" [style.background]="categoryGradient(item.category)">
+                <mat-icon>{{ categoryIcon(item.category) }}</mat-icon>
               </div>
-              <div class="br-bar-track">
-                <div class="br-bar-fill" [style.width.%]="item.percent > 100 ? 100 : item.percent"
-                  [style.background]="categoryGradient(item.category)"></div>
+              <div class="br-body">
+                <div class="br-top">
+                  <span class="br-label">{{ 'EXPENSES.CATEGORIES.' + item.category | translate }}</span>
+                  <div class="br-top-right">
+                    <span class="br-count">{{ item.expenses.length }}</span>
+                    <span class="br-amount">{{ item.total | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+                  </div>
+                </div>
+                <div class="br-bar-track">
+                  <div class="br-bar-fill" [style.width.%]="item.percent > 100 ? 100 : item.percent"
+                    [style.background]="categoryGradient(item.category)"></div>
+                </div>
+                <div class="br-pct">{{ item.percent | number:'1.0-1':'pt-BR' }}% da renda</div>
               </div>
-              <div class="br-pct">{{ item.percent | number:'1.0-1':'pt-BR' }}% da renda</div>
+              <mat-icon class="br-chevron">
+                {{ isCategoryExpanded(item.category) ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
             </div>
+
+            <!-- ── expanded detail list ── -->
+            @if (isCategoryExpanded(item.category)) {
+              <div class="br-detail-list">
+                @for (exp of item.expenses; track exp.id; let j = $index) {
+                  <div class="br-detail-item" [style.animation-delay]="(j * 30) + 'ms'">
+                    <div class="br-detail-left">
+                      <span class="br-detail-label">{{ exp.label }}</span>
+                      <div class="br-detail-meta">
+                        @if (exp.isFixed) {
+                          <span class="br-detail-badge fixed-badge">
+                            <mat-icon>repeat</mat-icon>Dia {{ exp.dueDay ?? 1 }}
+                          </span>
+                        } @else if (exp.date) {
+                          <span class="br-detail-badge date-badge">
+                            <mat-icon>calendar_today</mat-icon>{{ exp.date | date:'dd/MM/yy':'':'pt-BR' }}
+                          </span>
+                        }
+                        @if (!exp.isFixed && expenseMonthCount(exp.id) > 1) {
+                          <span class="br-detail-badge occ-badge">
+                            <mat-icon>sync</mat-icon>{{ expenseMonthCount(exp.id) }}×
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div class="br-detail-right">
+                      <span class="br-detail-amount">{{ exp.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+                      @if (expenseMonthCount(exp.id) > 1) {
+                        <span class="br-detail-months">× {{ expenseMonthCount(exp.id) }} meses</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>

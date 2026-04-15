@@ -55,7 +55,11 @@
     "TOTAL": "Total",
     "EMPTY": "Nenhuma fonte de renda adicionada ainda.",
     "COL_LABEL": "Descrição",
-    "COL_AMOUNT": "Valor"
+    "COL_AMOUNT": "Valor",
+    "FIXED": "Receita fixa (recorrente)",
+    "DATE": "Data do recebimento",
+    "TAB_FIXED": "Receitas Fixas",
+    "TAB_VARIABLE": "Receitas Variáveis"
   },
   "EXPENSES": {
     "TITLE": "Despesas",
@@ -66,6 +70,8 @@
     "CATEGORY": "Categoria",
     "FIXED": "Despesa fixa (recorrente mensal)",
     "DUE_DAY": "Dia de vencimento",
+    "DATE": "Data da despesa",
+    "OCCURRENCES": "Ocorrências (meses)",
     "SAVE": "Salvar",
     "ADD_BTN": "Adicionar",
     "CANCEL": "Cancelar",
@@ -111,7 +117,8 @@
     "LEGEND_OK": "≤70% da renda",
     "LEGEND_CAUTION": "70–90%",
     "LEGEND_WARN": ">90%",
-    "OF_INCOME": "da renda"
+    "OF_INCOME": "da renda",
+    "VARIABLE_EXPENSE": "Despesa variável"
   },
   "MONTHS": {
     "SHORT": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],

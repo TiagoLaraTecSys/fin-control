@@ -29,12 +29,30 @@
           <input matInput type="number" formControlName="amount" min="0" placeholder="0,00" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'INCOME.RECEIPT_DAY' | translate }}</mat-label>
-          <mat-icon matPrefix>event</mat-icon>
-          <input matInput type="number" formControlName="receiptDay" min="1" max="31" placeholder="1–31" />
-          <mat-hint>Dia do mês em que recebe</mat-hint>
-        </mat-form-field>
+        <div class="fixed-toggle">
+          <mat-checkbox formControlName="isFixed" color="primary">
+            {{ 'INCOME.FIXED' | translate }}
+          </mat-checkbox>
+        </div>
+
+        @if (isFixedValue) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'INCOME.RECEIPT_DAY' | translate }}</mat-label>
+            <mat-icon matPrefix>event</mat-icon>
+            <input matInput type="number" formControlName="receiptDay" min="1" max="31" placeholder="1–31" />
+            <mat-hint>Dia do mês em que recebe</mat-hint>
+          </mat-form-field>
+        } @else {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'INCOME.DATE' | translate }}</mat-label>
+            <mat-icon matPrefix>calendar_today</mat-icon>
+            <input matInput [matDatepicker]="incomePicker" formControlName="date"
+                   [placeholder]="(today | date:'dd/MM/yyyy':'':'pt-BR') ?? ''" readonly />
+            <mat-datepicker-toggle matIconSuffix [for]="incomePicker"></mat-datepicker-toggle>
+            <mat-datepicker #incomePicker></mat-datepicker>
+            <mat-hint>Hoje: {{ today | date:'dd/MM/yyyy':'':'pt-BR' }}</mat-hint>
+          </mat-form-field>
+        }
 
         <div class="form-actions">
           <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid" class="submit-btn">
@@ -51,53 +69,120 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- List Card -->
-  <mat-card class="list-card">
-    <div class="list-header">
-      <div>
-        <div class="list-title">{{ 'INCOME.LIST_TITLE' | translate }}</div>
-        <div class="list-sub">{{ incomes().length }} fonte(s) cadastrada(s)</div>
-      </div>
-      <div class="total-badge">
-        <span class="total-label">Total</span>
-        <span class="total-value">{{ totalIncome() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
-      </div>
-    </div>
+  <!-- Lists -->
+  <div class="lists-col">
 
-    <mat-card-content>
-      @if (incomes().length === 0) {
-        <div class="empty-state">
-          <mat-icon>savings</mat-icon>
-          <p>{{ 'INCOME.EMPTY' | translate }}</p>
+    <!-- Fixed incomes -->
+    <mat-card class="list-card">
+      <div class="list-header">
+        <div>
+          <div class="list-title">{{ 'INCOME.TAB_FIXED' | translate }}</div>
+          <div class="list-sub">{{ fixedIncomes().length }} receita(s) recorrente(s)</div>
         </div>
-      } @else {
-        <div class="income-list">
-          @for (row of incomes(); track row.id; let i = $index) {
-            <div class="income-item" [style.animation-delay]="(i * 50) + 'ms'">
-              <div class="item-icon income-icon">
-                <mat-icon>trending_up</mat-icon>
-              </div>
-              <div class="item-body">
-                <span class="item-label">{{ row.label }}</span>
-                <span class="day-badge">
-                  <mat-icon>event</mat-icon>
-                  Dia {{ row.receiptDay ?? 1 }}
-                </span>
-              </div>
-              <div class="item-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
-              <div class="item-actions">
-                <button mat-icon-button class="action-btn edit-btn" (click)="edit(row)">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button class="action-btn delete-btn" (click)="remove(row.id)">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
-              </div>
-            </div>
-          }
+        <div class="total-badge">
+          <span class="total-label">Total/mês</span>
+          <span class="total-value">{{ totalIncome() | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
         </div>
-      }
-    </mat-card-content>
-  </mat-card>
+      </div>
+      <mat-card-content>
+        @if (fixedIncomes().length === 0) {
+          <div class="empty-state">
+            <mat-icon>savings</mat-icon>
+            <p>{{ 'INCOME.EMPTY' | translate }}</p>
+          </div>
+        } @else {
+          <div class="income-list">
+            @for (row of fixedIncomes(); track row.id; let i = $index) {
+              <div class="income-item" [style.animation-delay]="(i * 50) + 'ms'">
+                <div class="item-icon income-icon">
+                  <mat-icon>trending_up</mat-icon>
+                </div>
+                <div class="item-body">
+                  <span class="item-label">{{ row.label }}</span>
+                  <span class="day-badge">
+                    <mat-icon>event</mat-icon>
+                    Dia {{ row.receiptDay ?? 1 }}
+                  </span>
+                </div>
+                <div class="item-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+                <div class="item-actions">
+                  <button mat-icon-button class="action-btn edit-btn" (click)="edit(row)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="action-btn delete-btn" (click)="remove(row.id)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
 
+    <!-- Variable incomes -->
+    <mat-card class="list-card">
+      <div class="list-header">
+        <div>
+          <div class="list-title">{{ 'INCOME.TAB_VARIABLE' | translate }}</div>
+          <div class="list-sub">{{ filteredVariableIncomes().length }} receita(s) avulsa(s)</div>
+        </div>
+      </div>
+
+      <div class="card-filter-bar">
+        <mat-form-field appearance="outline" class="filter-select">
+          <mat-select [value]="selectedMonth()" (selectionChange)="selectedMonth.set($event.value)">
+            @for (m of monthOptions; track m.value) {
+              <mat-option [value]="m.value">{{ m.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-select">
+          <mat-select [value]="selectedYear()" (selectionChange)="selectedYear.set($event.value)">
+            @for (y of years; track y) {
+              <mat-option [value]="y">{{ y }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-card-content>
+        @if (filteredVariableIncomes().length === 0) {
+          <div class="empty-state">
+            <mat-icon>monetization_on</mat-icon>
+            <p>Nenhuma receita variável {{ selectedMonth() !== null ? 'neste mês' : 'cadastrada' }}.</p>
+          </div>
+        } @else {
+          <div class="income-list">
+            @for (row of filteredVariableIncomes(); track row.id; let i = $index) {
+              <div class="income-item variable-income-item" [style.animation-delay]="(i * 50) + 'ms'">
+                <div class="item-icon variable-income-icon">
+                  <mat-icon>bolt</mat-icon>
+                </div>
+                <div class="item-body">
+                  <span class="item-label">{{ row.label }}</span>
+                  @if (row.date) {
+                    <span class="day-badge date-badge">
+                      <mat-icon>calendar_today</mat-icon>
+                      {{ row.date | date:'dd/MM/yyyy':'':'pt-BR' }}
+                    </span>
+                  }
+                </div>
+                <div class="item-amount">{{ row.amount | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</div>
+                <div class="item-actions">
+                  <button mat-icon-button class="action-btn edit-btn" (click)="edit(row)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="action-btn delete-btn" (click)="remove(row.id)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+  </div>
 </div>
